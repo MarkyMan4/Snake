@@ -21,6 +21,7 @@ LEFT = 2
 RIGHT = 3
 
 grid = [[0 for i in range(40)] for j in range(40)]
+
 # this will be a list of tuples where each element is a position in the grid
 # this is the rest of the snake
 player = [] # first element is head of snake
@@ -61,6 +62,11 @@ def new_pellet():
 
 	pellet_random_x = int(random() * len(grid))
 	pellet_random_y = int(random() * len(grid[0]))
+
+	while grid[pellet_random_x][pellet_random_y] == BLUE:
+		pellet_random_x = int(random() * len(grid))
+		pellet_random_y = int(random() * len(grid[0]))
+
 	pellet_pos = (pellet_random_x,pellet_random_y)
 	grid[pellet_random_x][pellet_random_y] = WHITE
 
