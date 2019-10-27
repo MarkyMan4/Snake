@@ -2,7 +2,7 @@ import pygame
 import sys
 from random import random
 
-T = 250
+T = 75
 MOVEEVENT = pygame.USEREVENT
 pygame.time.set_timer(MOVEEVENT, T)
 
@@ -21,12 +21,11 @@ LEFT = 2
 RIGHT = 3
 
 grid = [[0 for i in range(40)] for j in range(40)]
-player_pos = (0,0) # this is the head of the snake
-pellet_pos = (0,0)
-
 # this will be a list of tuples where each element is a position in the grid
 # this is the rest of the snake
-tail = []
+player = [] # first element is head of snake
+pellet_pos = (0,0)
+
 directions = [] # this is parallel to tail, keeps track of what direction each part is moving
 
 def init_grid():
@@ -45,20 +44,24 @@ def update_grid():
 	pygame.display.update()
 
 def init_player_and_pellet():
-	global player_pos
+	global player
 	global pellet_pos
-	global tail
+	global directions
 
 	player_random_x = int(random() * len(grid))
 	player_random_y = int(random() * len(grid[0]))
-	player_pos = (player_random_x,player_random_y)
-	tail.append((player_random_x,player_random_y))
+	player.append((player_random_x,player_random_y))
+
+	grid[player_random_x][player_random_y] = BLUE
+
+	new_pellet()
+
+def new_pellet():
+	global pellet_pos
 
 	pellet_random_x = int(random() * len(grid))
 	pellet_random_y = int(random() * len(grid[0]))
 	pellet_pos = (pellet_random_x,pellet_random_y)
-
-	grid[player_random_x][player_random_y] = BLUE
 	grid[pellet_random_x][pellet_random_y] = WHITE
 
 def is_out_of_bounds(new_tile):
@@ -68,38 +71,44 @@ def is_out_of_bounds(new_tile):
 	return False
 
 def update_player(direction):
-	global player_pos
-	global tail
+	global player
 	global directions
 
 	new_tile = (0,0)
+	head = player[0]
 
+	# update position of head
 	if direction == UP:
-		new_tile = (player_pos[0], player_pos[1] - 1)
+		new_tile = (head[0], head[1] - 1)
 	elif direction == DOWN:
-		new_tile = (player_pos[0], player_pos[1] + 1)
+		new_tile = (head[0], head[1] + 1)
 	elif direction == LEFT:
-		new_tile = (player_pos[0] - 1, player_pos[1])
+		new_tile = (head[0] - 1, head[1])
 	elif direction == RIGHT:
-		new_tile = (player_pos[0] + 1, player_pos[1])
+		new_tile = (head[0] + 1, head[1])
 
 	if is_out_of_bounds(new_tile):
 		# TODO: add a game over screen
 		# global GAME_OVER
 		# GAME_OVER = True
 		return
+	
+	end_of_tail = player[len(player) - 1]
 
-	# TODO: make snake grow when pellet is eaten
+	# update position of the rest of the body
+	for i in range(len(player) - 1, 0, -1):
+		player[i] = player[i - 1]
+		body_part_pos = player[i]
+		grid[body_part_pos[0]][body_part_pos[1]] = BLUE
+
+	grid[end_of_tail[0]][end_of_tail[1]] = BACKGROUND
+
 	if grid[new_tile[0]][new_tile[1]] == WHITE:
-		print('got pellet')
-		tail.append(player_pos)
-		directions.append(direction)
+		player.append(end_of_tail)
+		new_pellet()
 
-	grid[player_pos[0]][player_pos[1]] = BACKGROUND
-
-	# print(new_tile)
+	player[0] = new_tile
 	grid[new_tile[0]][new_tile[1]] = BLUE
-	player_pos = new_tile
 
 
 def game_loop():
@@ -108,7 +117,6 @@ def game_loop():
 	init_player_and_pellet()
 
 	direction = UP
-	directions.append(UP)
 
 	while not GAME_OVER:
 		for event in pygame.event.get():
@@ -120,6 +128,8 @@ def game_loop():
 				sys.exit()
 
 		keys = pygame.key.get_pressed()  #checking pressed keys
+
+		# update direction of the head
 		if keys[pygame.K_w]:
 			direction = UP
 		elif keys[pygame.K_s]:
