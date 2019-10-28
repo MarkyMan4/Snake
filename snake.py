@@ -97,6 +97,7 @@ def is_collision(new_tile):
 def update_player(direction):
 	global GAME_OVER
 	global score
+	global T
 
 	new_tile = (0,0)
 	head = player[0]
@@ -127,6 +128,10 @@ def update_player(direction):
 
 	if grid[new_tile[0]][new_tile[1]] == WHITE:
 		score += 1
+
+		T = int(T * .99)
+		pygame.time.set_timer(MOVEEVENT, T)
+
 		player.append(end_of_tail)
 		new_pellet()
 
